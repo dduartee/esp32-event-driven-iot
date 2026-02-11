@@ -1,0 +1,23 @@
+{
+  "C_Cpp.intelliSenseEngine": "default",
+  "idf.openOcdConfigs": [
+    "board/esp32c3-builtin.cfg"
+  ],
+  "idf.port": "/dev/ttyACM0",
+  "idf.currentSetup": "/home/gabrielkduarte/.espressif/v5.5.2/esp-idf",
+  "idf.customExtraVars": {
+    "IDF_TARGET": "esp32c3"
+  },
+  "clangd.path": "/home/gabrielkduarte/.espressif/tools/esp-clang/esp-19.1.2_20250312/esp-clang/bin/clangd",
+  "clangd.arguments": [
+    "--background-index",
+    "--query-driver=**",
+    "--compile-commands-dir=/home/gabrielkduarte/esp32-event-driven-iot/build"
+  ],
+  "cmake.enabled": false,
+  "idf.flashType": "JTAG",
+  "editor.tabSize": 2,
+  "editor.insertSpaces": true,
+  "C_Cpp.formatting": "clangFormat",
+  "C_Cpp.clang_format_style": "Google"
+}
