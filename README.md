@@ -103,11 +103,117 @@ Versão também é acessível no código via macros:
 
 Preparação para **OTA updates** futuro (esp_https_ota) com versões estáveis.
 
+## OTA (Over-The-Air Updates)
+
+Implementação completa de OTA usando **GitHub Releases** como backend.
+
+### Como Funciona
+
+1. **Boot do dispositivo**
+   - ESP32-C3 inicia normalmente
+   - Após WiFi conectar, `ota_task` dispara automaticamente
+
+2. **Check de Updates**
+   - Download de `manifest.json` em GitHub
+   - Compara versão atual vs disponível
+
+3. **Update (se necessário)**
+   - Download de novo firmware em HTTPS
+   - Validação via SHA256 checksum
+   - Flash em partição OTA alternate
+   - Reboot automático
+
+4. **Rollback Automático**
+   - Se o novo firmware falhar no boot (< 3 tentativas)
+   - Dispositivo volta automaticamente para versão anterior
+   - Continua funcionando normalmente
+
+### Configuração
+
+**Habilitar OTA via menuconfig:**
+```bash
+idf.py menuconfig
+# OTA Configuration → OTA manifest URL (deixar padrão)
+```
+
+**URL do manifest.json:**
+```
+https://raw.githubusercontent.com/gabrielkduarte/esp32-event-driven-iot/main/manifest.json
+```
+
+Customizável via `CONFIG_OTA_MANIFEST_URL` em `menuconfig`.
+
+### Partições (two_ota)
+
+Tabela de partições automaticamente gerenciada (4 MB de flash):
+```
+nvs,    data, nvs,     0x9000,  16K
+otadata,data, ota,     0xd000,  8K     ← Metadados de OTA
+phy,    data, phy,     0xf000,  4K
+factory,app,  factory, 0x10000, 1M     ← Fallback inicial
+ota_0,  app,  ota_0,   0x110000, 1M    ← Partição OTA ativa
+ota_1,  app,  ota_1,   0x210000, 1M    ← Partição OTA alternada
+```
+
+### CI/CD e Releases
+
+Workflow `.github/workflows/release.yml` gera automaticamente:
+1. Binários versionados (`v0.2.0`)
+2. **manifest.json** com SHA256 e URL do firmware
+
+Exemplo de release (v0.2.0):
+```
+esp32-event-driven-iot-v0.2.0.bin       ← Firmware
+bootloader-v0.2.0.bin                   ← Bootloader
+partition-table-v0.2.0.bin              ← Tabela de partições
+manifest.json                           ← Metadata de OTA
+```
+
+### Fluxo de Teste
+
+```bash
+# 1. Release inicial (v0.1.0) - sem OTA ainda
+git tag v0.1.0 && git push origin v0.1.0
+
+# 2. Flashar no dispositivo
+idf.py flash
+
+# 3. Implementar OTA e fazer release v0.2.0
+# (código de OTA já está aqui)
+git tag v0.2.0 && git push origin v0.2.0
+# → GitHub Actions compila, gera manifest.json
+
+# 4. Release v0.3.0 (novo firmware)
+git tag v0.3.0 && git push origin v0.3.0
+
+# 5. Dispositivo (ainda em v0.2.0):
+#   - Boot → checa manifest.json
+#   - Vê v0.3.0 disponível
+#   - Download + Flash automático
+#   - Reboot → agora em v0.3.0 ✓
+```
+
+### Modulos de OTA
+
+| Arquivo | Responsabilidade |
+|---|---|
+| `main/iot_ota.c/h` | Lógica de OTA (check, download, validação) |
+| `scripts/generate_manifest.py` | Script para gerar manifest.json com SHA256 |
+| `partitions_two_ota.csv` | Tabela de partições (ota_0 + ota_1) |
+
+### Segurança
+
+- ✅ **HTTPS** para download de firmware
+- ✅ **SHA256 checksum** para validação de integridade
+- ✅ **Rollback automático** se boot falhar
+- ✅ **Versionamento semântico** para comparação de versões
+- 🔒 Futuro: Assinatura digital de firmware
+
 ## Proximos Passos
 
 - [X] Reconexao WiFi automatica com backoff exponencial
 - [X] Credenciais WiFi via Kconfig (`menuconfig`) ao inves de hardcoded
-- [ ] OTA updates (`esp_https_ota`) com rollback automatico
+- [X] OTA updates (`esp_https_ota`) com rollback automatico e GitHub Releases
 - [ ] Tasks dedicadas para leitura de sensores
 - [ ] NVS para armazenamento persistente de configuracoes
 - [ ] Migrar modulos para `components/` quando o projeto crescer

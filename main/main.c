@@ -5,11 +5,13 @@
 #include "esp_event.h"
 #include "esp_flash.h"
 #include "esp_log.h"
+#include "esp_ota_ops.h"
 #include "esp_system.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/event_groups.h"
 #include "freertos/task.h"
 #include "iot_mqtt.h"
+#include "iot_ota.h"
 #include "iot_wifi.h"
 #include "nvs_flash.h"
 #include "sdkconfig.h"
@@ -58,6 +60,10 @@ void print_esp_info() {
 void app_main(void) {
   print_esp_info();
 
+  // Log da partição atual em execução
+  const esp_partition_t *running = esp_ota_get_running_partition();
+  ESP_LOGI(TAG, "Running partition: %s", running->label);
+
 #ifdef APP_VERSION_STRING
   ESP_LOGI(TAG, "Firmware version: %s", APP_VERSION_STRING);
 #else
@@ -72,6 +78,7 @@ void app_main(void) {
   wifi_init();
 
   xTaskCreate(mqtt_task, "mqtt_task", 4096, NULL, 5, NULL);
+  xTaskCreate(ota_task, "ota_task", 8192, NULL, 4, NULL);
 
   ESP_LOGI(TAG, "app_main finished.");
 }

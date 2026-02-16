@@ -1,13 +1,34 @@
 menu "WiFi Configuration"
+
     config WIFI_SSID
         string "WiFi SSID"
-        default ""
+        default "myssid"
         help
-            SSID da rede WiFi a conectar.
+            SSID (nome) da rede WiFi a conectar
 
     config WIFI_PASSWORD
         string "WiFi Password"
-        default ""
+        default "mypassword"
         help
-            Senha da rede WiFi.
+            Senha da rede WiFi
+
+endmenu
+
+menu "OTA Configuration"
+
+    config OTA_MANIFEST_URL
+        string "OTA manifest URL"
+        default "https://raw.githubusercontent.com/gabrielkduarte/esp32-event-driven-iot/main/manifest.json"
+        help
+            URL do manifest.json com metadata de versões disponíveis.
+            O ESP32 fará download deste arquivo após WiFi conectar
+            para verificar se há atualizações disponíveis.
+
+    config OTA_SKIP_VERSION_CHECK
+        bool "Skip version check (always update)"
+        default n
+        help
+            Para testes: força update mesmo se versão for igual ou menor.
+            Em produção, deixe como 'n'.
+
 endmenu
