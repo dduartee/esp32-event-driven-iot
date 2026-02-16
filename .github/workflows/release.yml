@@ -49,7 +49,7 @@ jobs:
         run: |
           cd build
           cp esp32-event-driven-iot.bin esp32-event-driven-iot-${{ steps.version.outputs.tag }}.bin
-          cp bootloader.bin bootloader-${{ steps.version.outputs.tag }}.bin
+          cp bootloader/bootloader.bin bootloader-${{ steps.version.outputs.tag }}.bin
           cp partition_table/partition-table.bin partition-table-${{ steps.version.outputs.tag }}.bin
           cp flasher_args.json flasher_args-${{ steps.version.outputs.tag }}.json
 

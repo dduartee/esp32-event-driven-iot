@@ -33,8 +33,8 @@ jobs:
         run: |
           echo "## Build Artifacts" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          if [ -f "build/firmware.bin" ]; then
-            ls -lh build/*.bin >> $GITHUB_STEP_SUMMARY
+          if [ -f "build/esp32-event-driven-iot.bin" ]; then
+            ls -lh build/esp32-event-driven-iot.bin build/bootloader/bootloader.bin build/partition_table/partition-table.bin >> $GITHUB_STEP_SUMMARY
             echo "✓ Build successful" >> $GITHUB_STEP_SUMMARY
           else
             echo "✗ Build failed - no binary found" >> $GITHUB_STEP_SUMMARY
@@ -47,8 +47,8 @@ jobs:
         with:
           name: firmware-artifacts
           path: |
-            build/firmware.bin
-            build/bootloader.bin
+            build/esp32-event-driven-iot.bin
+            build/bootloader/bootloader.bin
             build/partition_table/partition-table.bin
             build/flasher_args.json
           retention-days: 30
