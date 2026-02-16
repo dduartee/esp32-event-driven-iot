@@ -1,0 +1,83 @@
+name: Release - Build & Publish
+
+on:
+  push:
+    tags:
+      - "v[0-9]+.[0-9]+.[0-9]+"  # Matches v0.1.0, v1.2.3, etc.
+
+jobs:
+  release:
+    name: Create Release with Versioned Binaries
+    runs-on: ubuntu-latest
+
+    container:
+      image: espressif/idf:v5.5.2
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Extract version from tag
+        id: version
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/v}
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "tag=$GITHUB_REF_NAME" >> $GITHUB_OUTPUT
+          echo "Version extracted: $VERSION from tag $GITHUB_REF_NAME"
+
+      - name: Generate version.h
+        run: |
+          python3 scripts/generate_version.py "${{ steps.version.outputs.version }}"
+          cat main/version.h
+
+      - name: Build project
+        run: |
+          . $IDF_PATH/export.sh
+          idf.py build
+
+      - name: Create renamed binaries for release
+        run: |
+          cd build
+          cp firmware.bin firmware-${{ steps.version.outputs.tag }}.bin
+          cp bootloader.bin bootloader-${{ steps.version.outputs.tag }}.bin
+          cp partition_table/partition-table.bin partition-table-${{ steps.version.outputs.tag }}.bin
+          cp flasher_args.json flasher_args-${{ steps.version.outputs.tag }}.json
+
+          echo "## Release Artifacts" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          ls -lh *-${{ steps.version.outputs.tag }}.* >> $GITHUB_STEP_SUMMARY
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            build/firmware-${{ steps.version.outputs.tag }}.bin
+            build/bootloader-${{ steps.version.outputs.tag }}.bin
+            build/partition-table-${{ steps.version.outputs.tag }}.bin
+            build/flasher_args-${{ steps.version.outputs.tag }}.json
+          body: |
+            ## Firmware ${{ steps.version.outputs.version }}
+
+            Download the appropriate binaries for your setup:
+
+            - **firmware-${{ steps.version.outputs.tag }}.bin** — Main firmware
+            - **bootloader-${{ steps.version.outputs.tag }}.bin** — ESP32-C3 bootloader
+            - **partition-table-${{ steps.version.outputs.tag }}.bin** — Partition table
+            - **flasher_args-${{ steps.version.outputs.tag }}.json** — Flash tool arguments
+
+            ### Quick Flash (with esptool.py)
+
+            ```bash
+            esptool.py --chip esp32c3 write_flash \\
+              0x0 bootloader-${{ steps.version.outputs.tag }}.bin \\
+              0x8000 partition-table-${{ steps.version.outputs.tag }}.bin \\
+              0x10000 firmware-${{ steps.version.outputs.tag }}.bin
+            ```
+
+            Or with `idf.py flasher_args`:
+            ```bash
+            esptool.py --chip esp32c3 write_flash @flasher_args-${{ steps.version.outputs.tag }}.json
+            ```
