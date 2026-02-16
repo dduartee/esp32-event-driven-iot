@@ -32,6 +32,9 @@ flasher_args.json # Generated in build directory
 sdkconfig.old
 sdkconfig
 
+# Version header (auto-generated pelo CI/CD)
+main/version.h
+
 # ESP-IDF dependencies
 # For older versions or manual component management
 /components/.idf/

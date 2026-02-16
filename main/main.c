@@ -15,6 +15,13 @@
 #include "sdkconfig.h"
 #include "event_bits.h"
 
+// Version header, auto-gerado pelo CI/CD (vide .gitignore)
+#ifdef __has_include
+  #if __has_include("version.h")
+    #include "version.h"
+  #endif
+#endif
+
 EventGroupHandle_t wifi_event_group;
 static const char* TAG = "app_main";
 
@@ -50,6 +57,13 @@ void print_esp_info() {
 
 void app_main(void) {
   print_esp_info();
+
+#ifdef APP_VERSION_STRING
+  ESP_LOGI(TAG, "Firmware version: %s", APP_VERSION_STRING);
+#else
+  ESP_LOGI(TAG, "Firmware version: development (not from release)");
+#endif
+
   ESP_LOGI(TAG, "Hello world!\n");
 
   wifi_event_group = xEventGroupCreate();
